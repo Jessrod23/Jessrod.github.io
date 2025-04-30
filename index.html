@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Inicio de Sesión</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <style>
+    body {
+      background: linear-gradient(to right, #00c6ff, #0072ff);
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      width: 300px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 90%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #0072ff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #005fdd;
+    }
+
+    .error {
+      color: red;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Iniciar Sesión</h2>
+    <input type="text" id="username" placeholder="Escribe tu nombre">
+    <div id="error" class="error"></div>
+    <button onclick="login()">Entrar</button>
+  </div>
+
+  <script>
+    // Tu configuración de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBWQZQhNk8Sb9QRwagIPEJ7GhLg-p0_IVo",
+      authDomain: "jess-d0e64.firebaseapp.com",
+      databaseURL: "https://jess-d0e64-default-rtdb.firebaseio.com",
+      projectId: "jess-d0e64",
+      storageBucket: "jess-d0e64.appspot.com",
+      messagingSenderId: "1077483205609",
+      appId: "1:1077483205609:web:0cc8729bad381958961178",
+      measurementId: "G-6JYXZM80V4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function login() {
+      const username = document.getElementById('username').value.trim();
+      const errorDiv = document.getElementById('error');
+
+      if (!username) {
+        errorDiv.textContent = 'Por favor escribe tu nombre.';
+        return;
+      }
+
+      if (username.toLowerCase() === 'admin') {
+        window.location.href = 'admin.html';
+        
+      } else {
+        // Guardar nombre en Firebase
+        const timestamp = Date.now();
+        db.ref('logins/' + timestamp).set({
+          nombre: username,
+          fecha: new Date().toLocaleString()
+        });
+
+        // Guardar nombre para usarlo en otras páginas
+        localStorage.setItem('usuario', username);
+
+        // Redirigir al alumno
+        window.location.href = 'alumno.html';
+      }
+    }
+  </script>
+</body>
+</html>

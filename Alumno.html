@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel del Alumno</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script src="firebaseConfig.js"></script>
+  <script src="preguntas.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+  <div class="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-xl">
+    <h1 class="text-3xl font-bold mb-4 text-center">Examen: Cultura Digital</h1>
+    <form id="formulario" class="space-y-4">
+      <!-- Las preguntas se insertarán aquí -->
+    </form>
+    <div class="text-center mt-6">
+      <button id="enviarBtn" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Enviar Examen</button>
+    </div>
+    <div id="resultado" class="mt-6"></div>
+  </div>
+
+  <script>
+    const formulario = document.getElementById("formulario");
+    const resultadoDiv = document.getElementById("resultado");
+
+    // Selección aleatoria de 15 preguntas
+    const preguntasAleatorias = bancoPreguntas.sort(() => 0.5 - Math.random()).slice(0, 15);
+
+    preguntasAleatorias.forEach((q, index) => {
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <p class="font-semibold">${index + 1}. ${q.pregunta}</p>
+        ${q.opciones.map(op => `
+          <label class="block ml-4">
+            <input type="radio" name="pregunta${index}" value="${op}" class="mr-2"> ${op}
+          </label>
+        `).join('')}
+      `;
+      formulario.appendChild(div);
+    });
+
+    document.getElementById("enviarBtn").addEventListener("click", async (e) => {
+      e.preventDefault();
+      let correctas = 0;
+      let respuestas = [];
+
+      preguntasAleatorias.forEach((pregunta, i) => {
+        const opciones = document.getElementsByName(`pregunta${i}`);
+        let seleccion = "";
+        for (let o of opciones) {
+          if (o.checked) seleccion = o.value;
+        }
+        respuestas.push({
+          pregunta: pregunta.pregunta,
+          seleccion,
+          correcta: pregunta.respuesta,
+          acierto: seleccion === pregunta.respuesta
+        });
+        if (seleccion === pregunta.respuesta) correctas++;
+      });
+
+      const porcentaje = Math.round((correctas / preguntasAleatorias.length) * 100);
+
+      resultadoDiv.innerHTML = `<p class="text-xl font-bold text-center">Obtuviste ${correctas} de ${preguntasAleatorias.length} respuestas correctas (${porcentaje}%)</p>`;
+      respuestas.forEach((r, i) => {
+        const color = r.acierto ? 'text-green-600' : 'text-red-600';
+        resultadoDiv.innerHTML += `
+          <p class="${color}">${i + 1}. ${r.pregunta} — Tu respuesta: <strong>${r.seleccion || "No respondida"}</strong>. Correcta: <strong>${r.correcta}</strong></p>
+        `;
+      });
+
+      const alumno = localStorage.getItem("alumno") || "anonimo";
+      const db = firebase.firestore();
+      await db.collection("respuestas").add({
+        alumno,
+        correctas,
+        total: preguntasAleatorias.length,
+        porcentaje,
+        fecha: new Date(),
+        respuestas
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel del Administrador</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <script src="firebaseConfig.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <div class="max-w-6xl mx-auto mt-10 p-8 bg-white rounded-lg shadow-lg">
+    <h1 class="text-3xl font-bold text-center mb-6">Resultados del Examen</h1>
+    <table class="table-auto w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="p-2 border">Alumno</th>
+          <th class="p-2 border">Aciertos</th>
+          <th class="p-2 border">Total</th>
+          <th class="p-2 border">Porcentaje</th>
+          <th class="p-2 border">Fecha</th>
+          <th class="p-2 border">Detalles</th>
+        </tr>
+      </thead>
+      <tbody id="tablaResultados"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const db = firebase.firestore();
+    const tabla = document.getElementById("tablaResultados");
+
+    function cargarDatos() {
+      tabla.innerHTML = "";
+      db.collection("respuestas").orderBy("fecha", "desc").get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          const fila = document.createElement("tr");
+          fila.classList.add("hover:bg-gray-100");
+          fila.innerHTML = `
+            <td class="p-2 border">${d.alumno}</td>
+            <td class="p-2 border">${d.correctas}</td>
+            <td class="p-2 border">${d.total}</td>
+            <td class="p-2 border">${d.porcentaje}%</td>
+            <td class="p-2 border">${new Date(d.fecha.toDate()).toLocaleString()}</td>
+            <td class="p-2 border">
+              <button onclick='verDetalles(${JSON.stringify(d.respuestas)})' class="bg-blue-500 text-white px-3 py-1 rounded">Ver</button>
+            </td>
+          `;
+          tabla.appendChild(fila);
+        });
+      });
+    }
+
+    function verDetalles(respuestas) {
+      let detalles = respuestas.map((r, i) => `
+        ${i + 1}. ${r.pregunta}\nTu respuesta: ${r.seleccion || "No respondida"}\nCorrecta: ${r.correcta}\n`)
+        .join("\n----------------------\n");
+      alert(detalles);
+    }
+
+    cargarDatos();
+    setInterval(cargarDatos, 3); // Recargar cada 30 segundos
+  </script>
+</body>
+</html>
