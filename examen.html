@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Examen de Cultura Digital</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fff;
+      color: #333;
+      padding: 30px;
+    }
+    h2 {
+      color: #dd903c;
+      text-align: center;
+    }
+    .pregunta {
+      margin-bottom: 25px;
+      padding: 20px;
+      border: 2px solid #dd903c;
+      border-radius: 10px;
+      background: #fdfdfd;
+    }
+    .opcion {
+      margin-top: 8px;
+    }
+    button {
+      background-color: #dd903c;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #c47127;
+    }
+    .notificacion {
+      display: none;
+      background-color: #28a745;
+      color: white;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>Examen de Cultura Digital</h2>
+  <form id="formulario"></form>
+  <button onclick="enviarRespuestas()">Enviar Examen</button>
+
+  <!-- Notificación de Examen Enviado -->
+  <div id="notificacion" class="notificacion">
+    ¡Examen Enviado Exitosamente!
+  </div>
+
+  <!-- Parte 2: Firebase y lógica -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKSGF4Sny9K_-zC7dl96o1eOhmw2nvrpE",
+      authDomain: "examen-c2601.firebaseapp.com",
+      databaseURL: "https://examen-c2601-default-rtdb.firebaseio.com",
+      projectId: "examen-c2601",
+      storageBucket: "examen-c2601.firebasestorage.app",
+      messagingSenderId: "183710876262",
+      appId: "1:183710876262:web:94e1a10c774413e5f0a3a7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const preguntasBanco = [
+      { pregunta: "¿Qué es la cultura digital?", opciones: ["Uso de computadoras", "Interacción digital en la sociedad", "Solo redes sociales", "Solo Internet"], respuesta: "Interacción digital en la sociedad" },
+      { pregunta: "¿Qué es un software?", opciones: ["Parte física de la computadora", "Programas y aplicaciones", "Pantalla", "Cable USB"], respuesta: "Programas y aplicaciones" },
+      { pregunta: "¿Qué es hardware?", opciones: ["Sistema operativo", "Word", "Parte física del equipo", "Nube"], respuesta: "Parte física del equipo" },
+      { pregunta: "¿Qué es la web?", opciones: ["Una red social", "Conjunto de documentos y recursos interconectados", "Un dispositivo", "Un tipo de software"], respuesta: "Conjunto de documentos y recursos interconectados" },
+      { pregunta: "¿Qué es un servidor?", opciones: ["Una computadora que almacena archivos", "Un programa de diseño gráfico", "Una red de computadoras", "Un tipo de cable"], respuesta: "Una computadora que almacena archivos" },
+      { pregunta: "¿Qué es el Internet?", opciones: ["Un software", "Una red mundial de computadoras", "Un sistema operativo", "Un tipo de dispositivo"], respuesta: "Una red mundial de computadoras" },
+      { pregunta: "¿Qué es un virus informático?", opciones: ["Un hardware dañado", "Un programa que se reproduce sin control", "Un tipo de conexión", "Un servicio de Internet"], respuesta: "Un programa que se reproduce sin control" },
+      { pregunta: "¿Qué significa URL?", opciones: ["Un servicio de Internet", "Uniform Resource Locator", "Un programa informático", "Un tipo de software"], respuesta: "Uniform Resource Locator" },
+      { pregunta: "¿Qué es la nube?", opciones: ["Un servicio de almacenamiento en línea", "Un dispositivo", "Un tipo de red", "Un virus informático"], respuesta: "Un servicio de almacenamiento en línea" },
+      { pregunta: "¿Qué es el software libre?", opciones: ["Software pago", "Software con licencia abierta para modificarlo", "Software cerrado", "Software de código propietario"], respuesta: "Software con licencia abierta para modificarlo" },
+      { pregunta: "¿Qué es un navegador?", opciones: ["Un software para navegar por Internet", "Un servicio de almacenamiento", "Un tipo de red", "Un tipo de hardware"], respuesta: "Un software para navegar por Internet" },
+      { pregunta: "¿Qué es un sistema operativo?", opciones: ["Un hardware", "Un programa que gestiona los recursos de una computadora", "Una red de computadoras", "Un servicio de Internet"], respuesta: "Un programa que gestiona los recursos de una computadora" },
+      { pregunta: "¿Qué es la ciberseguridad?", opciones: ["Protección de datos en la red", "Un virus informático", "Un sistema operativo", "Un tipo de hardware"], respuesta: "Protección de datos en la red" },
+      { pregunta: "¿Qué es el Big Data?", opciones: ["Conjunto de datos pequeños", "Conjunto de datos masivos que se pueden analizar", "Un tipo de dispositivo", "Una red social"], respuesta: "Conjunto de datos masivos que se pueden analizar" },
+      { pregunta: "¿Qué es la inteligencia artificial?", opciones: ["Una red de computadoras", "Una disciplina que crea sistemas inteligentes", "Un servicio de almacenamiento", "Un software",], respuesta: "Una disciplina que crea sistemas inteligentes" }
+    ];
+
+    const alumno = localStorage.getItem("alumnoNombre") || "Desconocido";
+    const formulario = document.getElementById("formulario");
+
+    let preguntasSeleccionadas = [];
+    let tiempoInicio = Date.now();
+    let puntaje = 0;
+
+    function cargarPreguntas() {
+      preguntasSeleccionadas = preguntasBanco.sort(() => 0.5 - Math.random()).slice(0, 15);
+      mostrarPreguntas();
+    }
+
+    function mostrarPreguntas() {
+      formulario.innerHTML = ""; // Limpiamos el formulario
+
+      // Mostramos todas las preguntas
+      preguntasSeleccionadas.forEach((p, index) => {
+        const div = document.createElement("div");
+        div.className = "pregunta";
+        div.innerHTML = `<strong>${index + 1}. ${p.pregunta}</strong><br>` +
+          p.opciones.map(op =>
+            `<div class="opcion">
+              <input type="radio" name="p${index}" value="${op}" required>
+              <label>${op}</label>
+            </div>`).join("");
+        formulario.appendChild(div);
+      });
+    }
+
+    async function enviarRespuestas() {
+      const tiempoFin = Date.now();
+      const tiempoTotal = Math.floor((tiempoFin - tiempoInicio) / 1000);
+      const respuestas = [];
+      puntaje = 0; // Reiniciamos el puntaje
+
+      // Verificamos las respuestas del alumno
+      for (let i = 0; i < preguntasSeleccionadas.length; i++) {
+        const seleccion = document.querySelector(`input[name="p${i}"]:checked`);
+        const respuestaAlumno = seleccion ? seleccion.value : "Sin respuesta";
+
+        if (respuestaAlumno === preguntasSeleccionadas[i].respuesta) {
+          puntaje++; // Aumentamos el puntaje si la respuesta es correcta
+        }
+
+        respuestas.push({
+          pregunta: preguntasSeleccionadas[i].pregunta,
+          respuesta: respuestaAlumno
+        });
+      }
+
+      try {
+        // Guardamos los datos en Firestore
+        await addDoc(collection(db, "resultados"), {
+          alumno,
+          respuestas,
+          tiempo: tiempoTotal,
+          puntaje,
+          fecha: serverTimestamp()
+        });
+        // Mostramos la notificación de éxito
+        document.getElementById("notificacion").style.display = "block";
+        setTimeout(() => {
+          location.href = "index.html"; // Redirigimos a la página de inicio después de un momento
+        }, 2000);
+      } catch (error) {
+        alert("Error al guardar respuestas.");
+        console.error(error);
+      }
+    }
+
+    cargarPreguntas(); // Cargamos las preguntas cuando la página se carga
+  </script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Administrador - Examen Cultura Digital</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #ffffff;
+      padding: 30px;
+      color: #333;
+    }
+    h2 {
+      color: #dd903c;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background-color: #dd903c;
+      color: white;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    .respuestas {
+      white-space: pre-wrap;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Respuestas del Examen - Administrador</h2>
+  <table id="tabla">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Fecha</th>
+        <th>Tiempo (s)</th>
+        <th>Respuestas</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKSGF4Sny9K_-zC7dl96o1eOhmw2nvrpE",
+      authDomain: "examen-c2601.firebaseapp.com",
+      databaseURL: "https://examen-c2601-default-rtdb.firebaseio.com",
+      projectId: "examen-c2601",
+      storageBucket: "examen-c2601.firebasestorage.app",
+      messagingSenderId: "183710876262",
+      appId: "1:183710876262:web:94e1a10c774413e5f0a3a7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const tbody = document.querySelector("tbody");
+
+    onSnapshot(collection(db, "resultados"), (snapshot) => {
+      tbody.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const fecha = data.fecha?.toDate().toLocaleString() || "Sin fecha";
+        const respuestasTexto = data.respuestas.map((r, i) =>
+          `${i + 1}. ${r.pregunta}\n   ➤ Respuesta: ${r.respuesta}`
+        ).join("\n\n");
+
+        const fila = `
+          <tr>
+            <td>${data.alumno}</td>
+            <td>${fecha}</td>
+            <td>${data.tiempo}</td>
+            <td class="respuestas">${respuestasTexto}</td>
+          </tr>
+        `;
+        tbody.innerHTML += fila;
+      });
+    });
+  </script>
+</body>
+</html>
